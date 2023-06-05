@@ -22,7 +22,6 @@ return new class extends Migration
             $table->time('time');
             $table->string('description');
             $table->boolean('is_verified')->default(0);
-            $table->boolean('is_one_ip')->default(0);
             $table->boolean('is_password')->default(0);
             $table->timestamps();
         });

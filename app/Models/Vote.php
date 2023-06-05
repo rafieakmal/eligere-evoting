@@ -23,7 +23,6 @@ class Vote extends Model
 
     protected $casts = [
         'is_verified' => 'boolean',
-        'is_one_ip' => 'boolean',
         'is_password' => 'boolean',
     ];
 }

@@ -31,9 +31,9 @@ Route::controller(VoteController::class)->group(function () {
     Route::POST('/vote/add-options', 'options');
     Route::GET('/vote/update-option/{id}', 'updateOption');
     Route::GET('/vote/find/{slug}', 'showData');
+    Route::GET('/vote/check-password/{slug}', 'checkPassword');
     Route::GET('/vote/show-passwords/{slug}', 'showPasswords');
     Route::GET('/vote/data/u/{id}', 'getData');
     Route::GET('/vote/show-options/{slug}', 'showOptions');
     Route::GET('/vote/check-user/{user}/{slug}', 'checkUser');
-    Route::GET('/my-ip', 'ip');
 });

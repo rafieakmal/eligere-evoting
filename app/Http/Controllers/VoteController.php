@@ -26,7 +26,6 @@ class VoteController extends Controller {
             'end_date' => 'required',
             'end_time' => 'required',
             'only_verified' => 'required',
-            'only_one_ip' => 'required',
             'use_password' => 'required',
         ]);
 
@@ -38,7 +37,6 @@ class VoteController extends Controller {
         $vote->time = $request->input('end_time');
         $vote->description = $request->input('description');
         $vote->is_verified = $request->only_verified;
-        $vote->is_one_ip = $request->only_one_ip;
         $vote->is_password = $request->use_password;
         $vote->save();
         return response()->json($vote);
@@ -49,7 +47,6 @@ class VoteController extends Controller {
             'user_id' => 'required',
             'vote_id' => 'required',
             'slug' => 'required',
-            'user_ip' => 'required',
             'option_id' => 'required',
             'is_verified' => 'required',
         ]);
@@ -57,7 +54,6 @@ class VoteController extends Controller {
         $vote = new VoteData;
         $vote->user_id = $request->user_id;
         $vote->vote_id = $request->vote_id;
-        $vote->ip_address = $request->user_ip;
         $vote->vote_slug = $request->slug;
         $vote->vote_option = $request->option_id;
         $vote->is_verified = $request->is_verified;
@@ -128,11 +124,16 @@ class VoteController extends Controller {
             ->where('vote_slug', $request->slug)->delete();
         $votePassword = DB::table('vote_passwords')
             ->where('vote_slug', $request->slug)->delete();
-            return response()->json(['message' => 'Data has been deleted.']);
+        return response()->json(['message' => 'Data has been deleted.']);
     }
 
     public function showData($slug) {
         $voteData = Vote::where('slug', $slug)->first();
+        return response()->json($voteData);
+    }
+
+    public function checkPassword($slug) {
+        $voteData = Vote::where('slug', $slug)->select('is_password')->first();
         return response()->json($voteData);
     }
 
@@ -157,11 +158,6 @@ class VoteController extends Controller {
     public function showOptions($slug) {
         $voteOption = VoteOption::where('vote_slug', $slug)->get();
         return response()->json($voteOption);
-    }
-
-    public function ip(Request $request){
-        $response = Http::get('https://ipwho.is/');
-        return $response->json();
     }
 }
 

@@ -1,4 +1,5 @@
 /node_modules
+/vendor
 .env
 /resources/js/backend/ktp/node_modules
 /resources/js/backend/ktp/.env

@@ -113,7 +113,7 @@
                 <h5 class="text-success">Successfully voted</h5>
             </template>
             <template #default>
-                <img src="/assets/img/illustrations/icon-check3.png" class="img-center">
+                <img src="/assets/img/illustrations/check.gif" class="img-center">
             </template>
             <template #modal-footer="{ ok }">
                 <b-button variant="success" @click="closeSuccessModal()">
@@ -212,7 +212,6 @@ input[type='number'] {
             this.listenTimerIsLoaded()
             this.listenTimerIsEnded()
             this.setUser()
-            this.getUserIP()
             this.getOptionsData(this.$route.params.slug)
             this.getIfVoteUsePassword(this.$route.params.slug)
         },
@@ -243,18 +242,8 @@ input[type='number'] {
                 });
             },
 
-            getUserIP() {
-                axios.get('/api/my-ip')
-                .then(response => {
-                    this.user.ip = response.data.ip
-                })
-                .catch(error => {
-                    console.log(error)
-                });
-            },
-
             getIfVoteUsePassword(param) {
-                axios.get(`/api/vote/find/${param}`)
+                axios.get(`/api/vote/check-password/${param}`)
                 .then(response => {
                     this.isPassword = response.data.is_password
                     this.getVoteUsePassword(this.$route.params.slug)
@@ -327,7 +316,6 @@ input[type='number'] {
                 let formData = new FormData()
                 formData.append('user_id', this.user.id)
                 formData.append('vote_id', this.$store.state.voteData.id)
-                formData.append('user_ip', this.user.ip)
                 formData.append('slug', this.$store.state.voteData.slug)
                 formData.append('option_id', this.voteId)
                 formData.append('is_verified', '1')

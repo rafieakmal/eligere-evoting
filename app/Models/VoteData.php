@@ -11,7 +11,6 @@ class VoteData extends Model
         'user_id',
         'vote_id',
         'vote_slug',
-        'ip_address',
         'vote_option',
         'is_verified',
     ];

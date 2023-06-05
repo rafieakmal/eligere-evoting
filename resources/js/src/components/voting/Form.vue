@@ -183,11 +183,7 @@
                 votePassword: '',
                 settings: {
                     onlyVerified: true,
-                    onlyOneIP: false,
                     usePassword: false,
-                    onlyVerifiedValue: '1',
-                    onlyOneIPValue: '1',
-                    usePasswordValue: '0',
                 },
                 dismissSecs: 3,
                 dismissCountDown: 0,
@@ -225,22 +221,11 @@
                 }
                 return valid
             },
+
             countDownChanged(dismissCountDown) {
                 this.dismissCountDown = dismissCountDown
             },
 
-            settingOnlyVerified(event) {
-                this.settings.onlyVerified = true
-                this.settings.onlyVerifiedValue = event.target.value
-            },
-            settingOnlyOneIP(event) {
-                this.settings.onlyOneIP = true
-                this.settings.onlyOneIPValue = event.target.value
-            },
-            settingUsePassword(event) {
-                this.settings.usePassword = true
-                this.settings.usePasswordValue = event.target.value
-            },
             slugify(text, ampersand = 'and') {
                 const a = 'àáäâèéëêìíïîòóöôùúüûñçßÿỳýœæŕśńṕẃǵǹḿǘẍźḧ'
                 const b = 'aaaaeeeeiiiioooouuuuncsyyyoarsnpwgnmuxzh'
@@ -265,7 +250,7 @@
                 this.optionData.splice(index, 1)
             },
 
-            uploadOptions(file, name) {
+            async uploadOptions(file, name) {
                 let formData = new FormData()
                 formData.append('file', file)
                 formData.append('name', name)
@@ -291,7 +276,6 @@
                         return this.showAlert()
                     }
                 }
-                console.log(this.settings.usePassword ? '1': '0')
                 let formData = new FormData()
                 formData.append('owner_id', this.user.id)
                 formData.append('title', this.voteTitle)
@@ -299,9 +283,8 @@
                 formData.append('description', this.voteDescription)
                 formData.append('end_date', this.voteEndDate)
                 formData.append('end_time', this.voteEndDuration)
-                formData.append('only_verified', this.settings.onlyVerifiedValue)
-                formData.append('only_one_ip', this.settings.onlyOneIPValue)
-                formData.append('use_password', this.settings.usePassword ? '1': '0')
+                formData.append('only_verified', this.settings.onlyVerified ? '1' : '0')
+                formData.append('use_password', this.settings.usePassword ? '1' : '0')
                 this.axios({
                     url: '/api/vote/add-data',
                     method: 'post',
@@ -339,7 +322,7 @@
             async addOptions() {
                 await Promise.all(
                     this.optionData.map(async (option) => {
-                            const data = await this.uploadOptions(option.option_image, option.option_name)
+                        await this.uploadOptions(option.option_image, option.option_name)
                     })
                 )
                 

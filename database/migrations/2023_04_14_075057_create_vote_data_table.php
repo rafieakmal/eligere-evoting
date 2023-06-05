@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('vote_data', function (Blueprint $table) {
             $table->id();
             $table->string('user_id');
-            $table->string('ip_address');
             $table->string('vote_id');
             $table->string('vote_slug');
             $table->string('vote_option');
