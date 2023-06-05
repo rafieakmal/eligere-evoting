@@ -1,0 +1,32 @@
+{
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@techstark/opencv-js": "^4.7.0-release.1",
+    "body-parser": "^1.20.2",
+    "cli-color": "^2.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.18.2",
+    "express-busboy": "^9.0.0",
+    "express-fileupload": "^1.2.0",
+    "fs": "^0.0.1-security",
+    "gm": "^1.25.0",
+    "jpeg-js": "^0.4.4",
+    "mongoose": "^7.1.0",
+    "morgan": "^1.10.0",
+    "nik-parser": "^1.0.1",
+    "node-tesseract-ocr": "^2.0.0",
+    "opencv.js": "^1.2.1",
+    "opencv4nodejs-prebuilt-install": "^4.1.146",
+    "path": "^0.12.7",
+    "sharp": "^0.26.3",
+    "terser": "^5.3.8",
+    "twilio": "^3.64.0",
+    "typescript": "^4.0.5"
+  },
+  "devDependencies": {
+    "electron-rebuild": "^3.2.9"
+  }
+}
