@@ -183,12 +183,24 @@
             id="confirm-ktp-modal"
             hide-backdrop content-class="shadow" 
             centered title="Please confirm your data"
-            @show="resetKtpModal"
-            @hidden="resetKtpModal"
-            @ok="handleKtpModal"
         >
+            <b-alert
+                :show="ktpCountDown"
+                variant="danger"
+                @dismissed="ktpCountDown=0"
+                @dismiss-count-down="ktpCountDownChanged"
+            >
+                {{ messageError.nik }}
+                <!-- Countdown progress bar -->
+                <b-progress
+                    variant="danger"
+                    :max="ktpSecs"
+                    :value="ktpCountDown"
+                    height="3px"
+                ></b-progress>
+            </b-alert>
             <!-- Code form -->
-            <form ref="form" @submit.stop.prevent="handleKtpSubmit">
+            <form ref="form">
                 <b-form-group label="NIK" label-for="nik-input" class="mb-0">
                     <b-form-input
                         id="nik-input"
@@ -197,15 +209,7 @@
                     ></b-form-input>
                 </b-form-group>
 
-                <b-form-group label="Gender" label-for="gender-input" class="mb-0">
-                    <b-form-input
-                        id="gender-input"
-                        v-model="user.gender"
-                        placeholder="Enter your Gender"
-                    ></b-form-input>
-                </b-form-group>
-
-                <b-form-group label="Regency" label-for="regency-input" class="mb-0">
+                <b-form-group v-show="isNIKVerified" label="Regency" label-for="regency-input" class="mb-0">
                     <b-form-input
                         id="regency-input"
                         v-model="user.regency"
@@ -213,7 +217,7 @@
                     ></b-form-input>
                 </b-form-group>
 
-                <b-form-group label="Province" label-for="province-input" class="mb-0">
+                <b-form-group v-show="isNIKVerified" label="Province" label-for="province-input" class="mb-0">
                     <b-form-input
                         id="province-input"
                         v-model="user.province"
@@ -221,10 +225,18 @@
                     ></b-form-input>
                 </b-form-group>
             </form>
+            <template #modal-footer="{ ok }">
+                <b-button v-show="isNIKVerified" @click.stop.prevent="handleKtpSubmit()" variant="primary">
+                    Continue
+                </b-button>
+                <b-button v-show="!isNIKVerified" @click.stop.prevent="getNIKData()" variant="warning">
+                    Confirm Data
+                </b-button>
+            </template> 
         </b-modal>
 
         <!-- Checked modal -->
-        <b-modal ref="success-modal" id="success-camera" hide-backdrop content-class="shadow" centered>
+        <b-modal ref="success-modal" id="success-modal" hide-backdrop content-class="shadow" centered>
             <template #modal-header>
                 <h5 class="text-success">Successfully Signed Up</h5>
             </template>
@@ -300,6 +312,8 @@ input[type='number'] {
     import canvas from "canvas"
     import vue2Dropzone from 'vue2-dropzone'
     import 'vue2-dropzone/dist/vue2Dropzone.min.css'
+    import { initializeApp } from "firebase/app"
+    import { getAnalytics } from "firebase/analytics"
 
     export default {
         name: "sign-up",
@@ -322,14 +336,14 @@ input[type='number'] {
                     image: '',
                     nik: '',
                     province: '',
-                    regency: '',
-                    gender: '',
+                    regency: ''
                 },
                 state: {
                     isLoading: true,
                 },
                 messageError: {
                     phone: '',
+                    nik: '',
                     ktp: null
                 },
                 captureSrc:'',
@@ -339,10 +353,12 @@ input[type='number'] {
                 dismissCountDown: 0,
                 phoneSecs: 5,
                 phoneCountDown: 0,
+                ktpSecs: 5,
+                ktpCountDown: 0,
                 videoWidth: 640,
                 videoHeight: 480,
                 isFaceDetected: false,
-                is: false,
+                isNIKVerified: false,
                 intervalId: null,
                 code: '',
                 phone: '',
@@ -373,7 +389,7 @@ input[type='number'] {
             },
 
             phoneState() {
-                return this.user.phone.length >= 11 && this.user.phone.length < 14 ? true : false
+                return this.user.phone.length >= 10 && this.user.phone.length < 14 ? true : false
             },
 
             CodeState() {
@@ -401,9 +417,6 @@ input[type='number'] {
                 })
                     .then(response => {
                         this.user.nik = response.data.message.nik
-                        this.user.province = response.data.message.provinsi
-                        this.user.regency = response.data.message.kabupaten
-                        this.user.gender = response.data.message.kelamin
                         this.messageError.ktp = null
                         this.loadNewModels().then(() => {
                             this.cropKTP(img)
@@ -429,6 +442,39 @@ input[type='number'] {
                 const data = await this.getKtpData(file, image)
             },
 
+            showKtpAlert(message) {
+                this.messageError.nik = message
+                this.ktpCountDown = this.ktpSecs
+            },
+
+            async getNIKData() {
+                let formData = new FormData()
+                formData.append('nik', this.user.nik)
+                this.axios({
+                    url: '/api/nik',
+                    method: 'post',
+                    data: formData,
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'Access-Control-Allow-Origin': '*',
+                    }
+                })
+                    .then(response => {
+                        if(response.data.valid) {
+                            this.user.province = response.data.provinsi
+                            this.user.regency = response.data.kabupaten
+                            this.isNIKVerified = true
+                        } else {
+                            this.showKtpAlert('Not valid, please try again.')
+                        }
+                    })
+                    .catch(err => {
+                        this.messageError.ktp = 'Failed to detect your KTP'
+                        this.$refs.myVueDropzone.removeAllFiles()
+                    }
+                )
+            },
+
             async cropKTP(image) {
                 const canvas = this.$refs.canvas
                 const detections = await faceapi.detectAllFaces(canvas).withFaceLandmarks().withFaceDescriptors()
@@ -438,10 +484,15 @@ input[type='number'] {
                     faceCanvas.width = detections[0].detection.box.width
                     faceCanvas.height = detections[0].detection.box.height
                     const faceCtx = faceCanvas.getContext('2d')
-                    faceCtx.drawImage(image, detections[0].detection.box.x + 10, 
-                        detections[0].detection.box.y + 10, detections[0].detection.box.width + 10, 
-                        detections[0].detection.box.height + 10, 0, 0, detections[0].detection.box.width + 10, 
-                        detections[0].detection.box.height + 10)
+                    faceCtx.drawImage(image, 
+                        detections[0].detection.box.x, 
+                        detections[0].detection.box.y, 
+                        detections[0].detection.box.width, 
+                        detections[0].detection.box.height, 
+                        0, 
+                        0, 
+                        detections[0].detection.box.width, 
+                        detections[0].detection.box.height)
                     this.blob = await new Promise(resolve => faceCanvas.toBlob(resolve, 'image/jpeg', 0.9))
                     this.closeModal()
                 } else {
@@ -471,6 +522,10 @@ input[type='number'] {
 
             phoneCountDownChanged(dismissCountDown) {
                 this.phoneCountDown = dismissCountDown
+            },
+
+            ktpCountDownChanged(dismissCountDown) {
+                this.ktpCountDown = dismissCountDown
             },
 
             checkPhone(text) {
@@ -725,7 +780,7 @@ input[type='number'] {
                         this.$refs['success-modal'].show()
                 ))
                     .catch(err => 
-                        console.log(err)
+                        this.$refs['error-modal'].show()
                     )
             },
 
@@ -776,7 +831,7 @@ input[type='number'] {
 
             validatePassword() { 
                 if (this.user.password !== this.user.password_confirmation) {
-                    this.errorMessage = 'Passwords do not match'
+                    this.errorMessage = 'Password do not match'
                     this.validated = false
                     return false
                 }
@@ -786,8 +841,25 @@ input[type='number'] {
             },
 
             registration() {
-                this.showPhoneModal()
-            }
+                this.validateUser()
+            },
+
+            validateUser() {
+                const email = this.user.email
+                const username = this.user.username
+                axios.get(`/api/vote/check-username/${username}/${email}`)
+                .then(response => {
+                    if(response.data) {
+                        this.errorMessage = '409, Email or Username exists'
+                        return
+                    }
+                    this.showPhoneModal()
+                })
+                .catch(error => {
+                    console.log(error)
+                    this.errorMessage = '500, Internal error.'
+                });
+            },
         }
 
     }

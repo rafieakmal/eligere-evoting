@@ -13,12 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('users', function(Blueprint $table) {
             $table->id();
             $table->string('email')->unique();
-            $table->string('username');
+            $table->string('username')->unique();
             $table->string('password');
-            $table->string('phone');
+            $table->string('phone')->unique();
             $table->enum('role', ['admin', 'user']);
             $table->string('image')->default('/assets/img/profile/default.jpeg');
             $table->boolean('is_verified')->default(0);

@@ -38,6 +38,14 @@ class UserController extends Controller
         return response()->json(['message' => 'Registration Successful.'], 201);
     }
 
+    public function checkUsername($username, $email) {
+        $userExists = User::where(function ($query) use ($username, $email) {
+            $query->where('email', '=', $email)
+                ->orWhere('username', '=', $username);
+        })->exists();
+        return response()->json($userExists);
+    }
+
     public function login(Request $request) {
         $credentialsEmail = $request->validate([
             'email' => ['required', 'email'],
@@ -111,6 +119,18 @@ class UserController extends Controller
         $res = Http::attach('images', file_get_contents($image), 'image.jpg')
             ->post('http://127.0.0.1:5000/api/ktp/verify-ktp', $request->all());
         return $res->json();
+
+    }
+
+    public function nik(Request $request) {
+        $request->validate([
+            'nik' => 'required|string',
+        ]);
+        $response = Http::asForm()->post('http://127.0.0.1:5000/api/ktp/verify-nik',[
+            'nik' => $request->nik
+        ]
+        );
+        return $response->json();
 
     }
 

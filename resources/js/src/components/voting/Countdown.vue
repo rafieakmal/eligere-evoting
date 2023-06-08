@@ -5,23 +5,23 @@
                 <div class="col">
                     <div class="d-flex justify-content-center countdown">
                         <div>
-                            <h3 v-if="loaded">{{displayDays}}</h3>
-                            <h3 v-else>...</h3>
+                            <h3 v-show="loaded">{{displayDays}}</h3>
+                            <h3 v-show="!loaded">...</h3>
                             <h4>Day(s)</h4>
                         </div>
                         <div>
-                            <h3 v-if="loaded">{{displayHours}}</h3>
-                            <h3 v-else>...</h3>
+                            <h3 v-show="loaded">{{displayHours}}</h3>
+                            <h3 v-show="!loaded">...</h3>
                             <h4>Hour(s)</h4>
                         </div>
                         <div>
-                            <h3 v-if="loaded">{{displayMinutes}}</h3>
-                            <h3 v-else>...</h3>
+                            <h3 v-show="loaded">{{displayMinutes}}</h3>
+                            <h3 v-show="!loaded">...</h3>
                             <h4>Minute(s)</h4>
                         </div>
                         <div>
-                            <h3 v-if="loaded">{{displaySeconds}}</h3>
-                            <h3 v-else>...</h3>
+                            <h3 v-show="loaded">{{displaySeconds}}</h3>
+                            <h3 v-show="!loaded">...</h3>
                             <h4>Second(s)</h4>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
                     if (isNaN(this.displaySeconds)) this.displaySeconds = 0
                     if (isNaN(this.displayHours)) this.displayHours = 0
                     if (isNaN(this.displayDays)) this.displayDays = 0
-                    this.emitTimerIsLoaded()
+                    return this.emitTimerIsLoaded()
                 }, 1000)
             }
         }

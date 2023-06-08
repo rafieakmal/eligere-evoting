@@ -16,8 +16,10 @@ Route::controller(UserController::class)->group(function () {
     Route::POST('/login-account', 'login');
     Route::POST('/reset-password', 'sendPasswordResetLink')->name('password.reset');
     Route::POST('/confirm-reset-password', 'reset')->name('password.request');
+    Route::GET('/vote/check-username/{username}/{email}', 'checkUsername');
     Route::POST('/upload', 'upload');
     Route::POST('/ktp', 'ktp');
+    Route::POST('/nik', 'nik');
     Route::POST('/notification', 'notification');
     Route::POST('/send-code', 'sendCode');
 });

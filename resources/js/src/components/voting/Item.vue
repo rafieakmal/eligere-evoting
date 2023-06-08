@@ -81,7 +81,8 @@
         <b-modal ref="camera-modal" id="modal-camera" hide-backdrop content-class="shadow" centered>
             <template #modal-header>
                 <h5 v-if="isFaceDetected" class="text-success">Face Detected: Hi, {{ usernameThatVerified }}👋</h5>
-                <h5 v-else class="text-danger">Not Detected, Please wait...</h5>
+                <h5 v-else-if="!isNotError" class="text-danger">Sorry we can not recognize your face right now</h5>
+                <h5 v-else class="text-danger">Your face is not detected, Please wait...</h5>
             </template>
             <template #default>
                 <div v-show="loading.isCameraLoaded && loading.isModuleLoaded">
@@ -196,6 +197,7 @@ input[type='number'] {
                 },
                 isPassword: false,
                 isFaceDetected: false,
+                isNotError: true,
                 intervalId: null,
                 faceMatcher: null,
                 hasVoted: false,
@@ -376,6 +378,7 @@ input[type='number'] {
             async loadNewModels() {
                 await Promise.all([
                     faceapi.loadTinyFaceDetectorModel('/models'),
+                    faceapi.loadSsdMobilenetv1Model('/models'),
                     faceapi.loadFaceDetectionModel('/models'),
                     faceapi.loadFaceLandmarkModel('/models'),
                     faceapi.loadFaceRecognitionModel('/models'),
@@ -408,20 +411,33 @@ input[type='number'] {
             async loadLabeledImages() {
                 const labels = [this.user.username]
                 console.log(labels)
+                const detectionOptions = new faceapi.SsdMobilenetv1Options({ 
+                    minConfidence: 0.7, 
+                    maxResults: 1 
+                })
                 const labeledFaceDescriptors = await Promise.all(
                     labels.map(async (label) => {
                         const imgUrl = `/assets/img/user/${label}.jpg`
                         const img = await faceapi.fetchImage(imgUrl)
                         console.log(img)
-                        const detections = await faceapi.detectSingleFace(img)
-                            .withFaceLandmarks()
-                            .withFaceDescriptor()
-                        console.log(detections)
-                        return new faceapi.LabeledFaceDescriptors(label, [detections.descriptor])
+                        try {
+                            const detections = await faceapi.detectAllFaces(img, detectionOptions).withFaceLandmarks().withFaceDescriptors()
+                            if(detections) {
+                                return new faceapi.LabeledFaceDescriptors(label, [detections[0].descriptor])
+                            }
+                            else {
+                                this.isNotError = false
+                            }
+                            console.log(detections)
+                        } catch(e) {
+                            console.log(e)
+                            this.isNotError = false
+                        }
+                        
                     })
                 );
-                this.labeledDescriptors = labeledFaceDescriptors;
-                this.faceMatcher = new faceapi.FaceMatcher(this.labeledDescriptors, 0.6);
+                this.labeledDescriptors = labeledFaceDescriptors
+                this.faceMatcher = new faceapi.FaceMatcher(this.labeledDescriptors, 0.6)
             },
 
             async recognizeFaces() {
@@ -429,13 +445,14 @@ input[type='number'] {
                 const canvas = this.$refs.canvas
                 const displaySize = { width: video.width, height: video.height }
                 const detectionOptions = new faceapi.TinyFaceDetectorOptions({ 
-                    inputSize: 224, 
-                    scoreThreshold: 0.5 
-                });
+                    inputSize: 160, 
+                    scoreThreshold: 0.7 
+                })
                 this.intervalId = setInterval(async () => {
                     const detections = await faceapi.detectAllFaces(video, detectionOptions)
                         .withFaceLandmarks()
                         .withFaceDescriptors()
+                    console.log(detections)
                     if (detections) {
                         const resizedDetections = faceapi.resizeResults(detections, displaySize);
                         const results = resizedDetections.map((d) => this.faceMatcher.findBestMatch(d.descriptor))
